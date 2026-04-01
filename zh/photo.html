@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TikoSave — 下载TikTok照片</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pink: #fe2c55; --pink-dark: #c4163d; --cyan: #25f4ee; --cyan-dark: #12c8c3;
+      --bg: #0a0a0a; --bg2: #111111; --bg3: #181818; --bg4: #1f1f1f;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --text: #f5f5f5; --muted: #888; --muted2: #555; --radius: 16px; --radius-sm: 10px;
+    }
+    body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; direction: ltr; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .ad-zone { text-align: center; overflow: hidden; }
+    .ad-zone-label { font-size: 10px; color: var(--muted2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .ad-ph { background: var(--bg3); border: 1px dashed #2a2a2a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--muted2); font-size: 12px; font-weight: 700; gap: 8px; }
+    .ad-ph::before { content: "📢"; }
+    .ad-728x90 { height: 90px; max-width: 728px; margin: 0 auto; }
+    .ad-300x250 { height: 250px; width: 100%; max-width: 300px; margin: 0 auto; }
+    .ad-resp { height: 90px; width: 100%; }
+    .top-ad-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 10px 20px; }
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 0 5%; height: 62px; background: rgba(10,10,10,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; backdrop-filter: blur(12px); }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
+    .logo-icon { width: 34px; height: 34px; background: linear-gradient(135deg, var(--pink), #ff7043); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .logo span { color: var(--pink); }
+    .nav-menu { display: flex; align-items: center; gap: 6px; list-style: none; }
+    .nav-menu a { display: block; padding: 7px 14px; font-size: 13.5px; font-weight: 600; color: var(--muted); border-radius: 8px; transition: color 0.2s, background 0.2s; }
+    .nav-menu a:hover { color: var(--text); background: var(--bg3); }
+    .nav-active { color: var(--pink) !important; }
+    .nav-cta { background: linear-gradient(135deg, var(--pink), #ff7043); color: #fff !important; padding: 8px 18px !important; font-weight: 700 !important; border-radius: 9px !important; }
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; }
+    .lang-switcher { position: relative; }
+    .lang-btn { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 7px 14px; font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; white-space: nowrap; }
+    .lang-btn:hover { background: var(--bg4); }
+    .lang-dropdown { position: absolute; top: calc(100% + 8px); left: 0; background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; padding: 8px; min-width: 180px; z-index: 999; box-shadow: 0 16px 40px rgba(0,0,0,0.4); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; visibility: hidden; opacity: 0; transform: translateY(-8px); transition: all 0.2s; pointer-events: none; }
+    .lang-dropdown.open { visibility: visible; opacity: 1; transform: translateY(0); pointer-events: all; }
+    .lang-option { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .lang-option:hover { background: var(--bg3); color: var(--text); }
+    .lang-option.lang-active { color: var(--pink); background: rgba(254,44,85,0.08); }
+    .hero { position: relative; padding: 72px 5% 64px; text-align: center; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 20% 0%, rgba(254,44,85,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 0%, rgba(37,244,238,0.08) 0%, transparent 60%); pointer-events: none; }
+    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent); }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(37,244,238,0.08); border: 1px solid rgba(37,244,238,0.2); color: var(--cyan); font-size: 12.5px; font-weight: 700; padding: 6px 16px; border-radius: 100px; margin-bottom: 22px; }
+    .badge-dot { width: 7px; height: 7px; background: var(--cyan); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+    .hero h1 { font-size: clamp(28px, 5.5vw, 58px); font-weight: 900; line-height: 1.15; margin-bottom: 16px; }
+    .hero h1 .hl { background: linear-gradient(90deg, var(--pink), #ff7043, var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { color: var(--muted); font-size: 16px; max-width: 480px; margin: 0 auto 40px; line-height: 1.7; font-weight: 500; }
+    .dl-box { background: var(--bg2); border: 1px solid var(--border2); border-radius: 24px; padding: 32px; max-width: 700px; margin: 0 auto; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+    .input-row { display: flex; gap: 8px; margin-bottom: 18px; }
+    .url-input { flex: 1; background: var(--bg3); border: 1.5px solid var(--border2); border-radius: var(--radius-sm); padding: 15px 18px; color: var(--text); font-family: 'Roboto', sans-serif; font-size: 14px; direction: ltr; outline: none; transition: border-color 0.2s; }
+    .url-input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(254,44,85,0.12); }
+    .url-input::placeholder { color: var(--muted2); }
+    .paste-btn { background: var(--bg4); border: 1.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--cyan); padding: 15px 18px; font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+    .paste-btn:hover { background: var(--bg3); border-color: var(--cyan); }
+    .dl-main-btn { background: linear-gradient(135deg, var(--pink) 0%, #ff7043 100%); border: none; border-radius: var(--radius-sm); color: #fff; padding: 15px 28px; font-family: 'Roboto', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; white-space: nowrap; flex-shrink: 0; min-width: 120px; transition: opacity 0.2s, transform 0.15s; box-shadow: 0 6px 20px rgba(254,44,85,0.35); }
+    .dl-main-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+    .dl-main-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { background: var(--bg3); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: var(--muted); }
+    .chip.active, .chip:hover { border-color: var(--pink); color: var(--pink); background: rgba(254,44,85,0.06); }
+    .progress-wrap { height: 3px; background: var(--border); border-radius: 3px; margin-top: 22px; overflow: hidden; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--pink), var(--cyan)); animation: progress 1.8s ease-in-out infinite; }
+    @keyframes progress { 0%{width:0%;margin-right:100%} 50%{width:55%;margin-right:25%} 100%{width:0%;margin-right:0%} }
+    .error-box { background: rgba(254,44,85,0.08); border: 1px solid rgba(254,44,85,0.25); border-radius: var(--radius-sm); padding: 14px 18px; color: #ff8da1; font-size: 14px; font-weight: 600; margin-top: 18px; display: none; }
+    .error-box.show { display: block; animation: fadeIn 0.25s ease; }
+    .result-box { display: none; margin-top: 22px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+    .result-box.show { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .result-header { display: flex; gap: 14px; padding: 18px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .r-thumb { width: 88px; height: 88px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: var(--bg4); }
+    .r-thumb-ph { width: 88px; height: 88px; border-radius: 10px; background: var(--bg4); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+    .r-info { flex: 1; min-width: 0; }
+    .r-title { font-size: 14.5px; font-weight: 700; margin-bottom: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .r-author { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+    .r-dur { font-size: 12px; color: var(--cyan); font-weight: 600; }
+    .result-formats { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .fmt-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg4); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; }
+    .fmt-info { display: flex; flex-direction: column; gap: 3px; }
+    .fmt-label { font-size: 14px; font-weight: 700; }
+    .fmt-meta { font-size: 12px; color: var(--muted); }
+    .fmt-dl-btn { background: linear-gradient(135deg, var(--pink), #ff7043); border: none; border-radius: 8px; color: #fff; padding: 10px 22px; font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; transition: opacity 0.2s; }
+    .fmt-dl-btn:hover { opacity: 0.88; }
+    .stats-strip { display: flex; justify-content: center; gap: 48px; padding: 28px 5%; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--bg2); flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 28px; font-weight: 900; background: linear-gradient(90deg, var(--pink), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; }
+    .stat-lbl { font-size: 12.5px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+    .section { padding: 64px 5%; }
+    .section-center { text-align: center; }
+    .sec-tag { display: inline-block; background: rgba(254,44,85,0.1); border: 1px solid rgba(254,44,85,0.2); color: var(--pink); font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 100px; margin-bottom: 14px; }
+    .sec-title { font-size: clamp(22px, 3vw, 34px); font-weight: 900; line-height: 1.2; margin-bottom: 14px; }
+    .sec-title span { color: var(--pink); }
+    .sec-sub { font-size: 15px; color: var(--muted); max-width: 520px; margin: 0 auto 48px; line-height: 1.7; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; max-width: 1060px; margin: 0 auto; }
+    .feat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 30px 24px; text-align: center; transition: border-color 0.25s, transform 0.25s; }
+    .feat-card:hover { border-color: rgba(254,44,85,0.4); transform: translateY(-5px); }
+    .feat-icon { width: 52px; height: 52px; background: linear-gradient(135deg, rgba(254,44,85,0.12), rgba(255,112,67,0.08)); border: 1px solid rgba(254,44,85,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 18px; }
+    .feat-card h3 { font-size: 15.5px; font-weight: 800; margin-bottom: 9px; }
+    .feat-card p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; counter-reset: step; }
+    .step-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 22px 26px; text-align: center; counter-increment: step; position: relative; }
+    .step-card::before { content: counter(step); position: absolute; top: -15px; right: 50%; transform: translateX(50%); width: 30px; height: 30px; background: linear-gradient(135deg, var(--pink), #ff7043); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #fff; box-shadow: 0 4px 12px rgba(254,44,85,0.4); }
+    .step-icon { font-size: 28px; margin-bottom: 14px; }
+    .step-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+    .step-card p { font-size: 13px; color: var(--muted); line-height: 1.65; }
+    .layout-sidebar { display: grid; grid-template-columns: 1fr 320px; gap: 32px; max-width: 1200px; margin: 0 auto; padding: 0 5% 64px; align-items: start; }
+    .sidebar { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 20px; }
+    .faq-list { display: flex; flex-direction: column; gap: 10px; }
+    .faq-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+    .faq-item.open { border-color: var(--border2); }
+    .faq-q { padding: 17px 20px; font-size: 14.5px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .faq-arrow { width: 22px; height: 22px; background: var(--bg3); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; transition: transform 0.2s; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); background: rgba(254,44,85,0.15); color: var(--pink); }
+    .faq-a { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s; font-size: 13.5px; color: var(--muted); line-height: 1.75; }
+    .faq-item.open .faq-a { max-height: 220px; padding: 0 20px 18px; }
+    .ad-divider { background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 18px 5%; }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; max-width: 1000px; margin: 0 auto; }
+    .tool-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 20px 18px; display: flex; align-items: center; gap: 12px; transition: border-color 0.2s, transform 0.2s; text-decoration: none; color: var(--text); }
+    .tool-card:hover { border-color: var(--border2); transform: translateY(-3px); }
+    .tool-card-icon { width: 38px; height: 38px; background: var(--bg3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .tool-card-info strong { font-size: 13.5px; font-weight: 700; display: block; }
+    .tool-card-info span { font-size: 11.5px; color: var(--muted); }
+    .footer-col h4 { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 10px; }
+    .footer-col ul li a { font-size: 13px; color: var(--muted); transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--text); }
+    @media(max-width:900px){ .layout-sidebar{grid-template-columns:1fr} .sidebar{display:none} }
+    @media(max-width:680px){ nav .nav-menu{display:none} .hamburger{display:flex} .input-row{flex-wrap:wrap} .dl-main-btn{width:100%} .hero{padding:52px 5% 48px} }
+  
+    /* ── Social Links ── */
+    /* ── Unified Footer CSS ── */
+    footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 48px 5% 0; margin-top: 60px; }
+    .footer-ad { text-align: center; margin-bottom: 40px; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 40px; }
+    .footer-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-top: 12px; }
+    .footer-col h4 { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .footer-col ul { list-style: none; padding: 0; margin: 0; }
+    .footer-col ul li { margin-bottom: 10px; }
+    .footer-col ul li a { font-size: 13px; color: var(--muted); transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--text); }
+    .footer-bottom { border-top: 1px solid var(--border); padding: 20px 0 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted2); flex-wrap: wrap; gap: 10px; }
+    .social-links { display: flex; gap: 10px; align-items: center; }
+    .social-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: transform 0.2s, opacity 0.2s; flex-shrink: 0; }
+    .social-btn:hover { transform: translateY(-2px); opacity: 0.85; }
+    .social-btn:nth-child(1) { background: #1877f2; }
+    .social-btn:nth-child(2) { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+    .social-btn:nth-child(3) { background: #ea4335; }
+    .social-btn:nth-child(4) { background: #0077b5; }
+    @media(max-width:900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media(max-width:480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } .footer-bottom { flex-direction: column; align-items: flex-start; } }</style>
+</head>
+<body>
+<div class="top-ad-bar">
+  <div class="ad-zone"><div class="ad-zone-label">广告</div>
+  <div class="ad-ph ad-728x90">AdSense 728×90</div></div>
+</div>
+<nav>
+  <a href="../index.html" class="logo" style="text-decoration:none"><div class="logo-icon">▼</div>Tiko<span>Save</span></a>
+  <ul class="nav-menu" id="navMenu">
+    <li><a href="index.html">下载视频</a></li>
+    <li><a href="mp3.html">下载MP3</a></li>
+    <li><a href="story.html">Story</a></li>
+    <li><a href="photo.html" class="nav-active">照片</a></li>
+    <li><a href="douyin.html">抖音</a></li>
+    <li><a href="blog.html">博客</a></li>
+    <li><a href="contact.html">联系我们</a></li>
+    <li><a href="index.html" class="nav-cta">立即开始 ↓</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="lang-switcher" id="langSwitcher"></div>
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="badge-dot"></span>🖼️ 照片下载 — 100% 免费</div>
+    <h1>下载 <span class="hl">TikTok照片</span><br/>完整画质</h1>
+    <p class="hero-sub">以高质量下载TikTok照片和幻灯片 — 无水印</p>
+    <div class="dl-box">
+      <div class="input-row">
+        <input type="text" class="url-input" id="urlInput" placeholder="https://www.tiktok.com/@username/video/..." autocomplete="off" spellcheck="false" dir="ltr"/>
+        <button class="paste-btn" onclick="pasteURL()">📋 粘贴</button>
+        <button class="dl-main-btn" id="downloadBtn" onclick="startDownload()">⬇ 下载</button>
+      </div>
+      <div class="chips"><div class="chip">📸 TikTok照片</div><div class="chip">🚫 无水印</div><div class="chip">⚡ 即时</div></div>
+      <div class="progress-wrap" id="progressWrap"><div class="progress-fill"></div></div>
+      <div class="error-box" id="errorBox"></div>
+      <div class="result-box" id="resultBox">
+        <div class="result-header">
+          <div class="r-thumb-ph" id="thumbPh">🎬</div>
+          <img class="r-thumb" id="resultThumb" style="display:none" alt="thumbnail"/>
+          <div class="r-info">
+            <div class="r-title" id="resultTitle">—</div>
+            <div class="r-author" id="resultAuthor">—</div>
+            <div class="r-dur" id="resultDur"></div>
+          </div>
+        </div>
+        <div class="result-formats" id="resultFormats"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="stats-strip">
+  <div class="stat"><div class="stat-num">50M+</div><div class="stat-lbl">次下载</div></div>
+  <div class="stat"><div class="stat-num">4.9★</div><div class="stat-lbl">评分</div></div>
+  <div class="stat"><div class="stat-num">190+</div><div class="stat-lbl">个国家</div></div>
+  <div class="stat"><div class="stat-num">0.3s</div><div class="stat-lbl">平均时间</div></div>
+</div>
+<section class="section section-center">
+  <div class="sec-tag">✦ 为什么选择TikoSave照片</div>
+  <h2 class="sec-title">最佳<span>TikTok照片</span>下载工具</h2>
+  <p class="sec-sub">以完整画质保存所有TikTok照片 — 免费</p>
+  <div class="features-grid"><div class="feat-card"><div class="feat-icon">🎬</div><h3>高清画质</h3><p>最高分辨率视频</p></div><div class="feat-card"><div class="feat-icon">🚫</div><h3>无水印</h3><p>干净专业</p></div><div class="feat-card"><div class="feat-icon">⚡</div><h3>即时</h3><p>几秒内完成</p></div><div class="feat-card"><div class="feat-icon">📱</div><h3>移动友好</h3><p>iPhone和Android</p></div><div class="feat-card"><div class="feat-icon">🔒</div><h3>隐私保护</h3><p>我们从不保存您的文件</p></div><div class="feat-card"><div class="feat-icon">♾️</div><h3>无限制</h3><p>无限制使用</p></div></div>
+</section>
+<div class="ad-divider">
+  <div class="ad-zone"><div class="ad-zone-label">广告</div>
+  <div class="ad-ph ad-resp">AdSense In-Article</div></div>
+</div>
+<section class="section section-center">
+  <div class="sec-tag">📸 如何使用</div>
+  <h2 class="sec-title">使用方法</h2>
+  <div class="steps-grid"><div class="step-card"><div class="step-icon">📱</div><h3>打开TikTok</h3><p>前往含照片的帖子</p></div><div class="step-card"><div class="step-icon">🔗</div><h3>复制链接</h3><p>点击分享然后复制链接</p></div><div class="step-card"><div class="step-icon">📋</div><h3>粘贴到这里</h3><p>粘贴到输入框并点击下载</p></div><div class="step-card"><div class="step-icon">📸</div><h3>保存照片</h3><p>点击下载按钮</p></div></div>
+</section>
+<div class="layout-sidebar">
+  <div>
+    <div class="sec-tag">❓ FAQ</div>
+    <h2 class="sec-title" style="margin-bottom:28px">常见问题</h2>
+    <div class="faq-list"><div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)">我可以下载幻灯片中的所有照片吗？<div class="faq-arrow">▾</div></div><div class="faq-a">是的，所有照片一次性下载。</div></div><div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)">有水印吗？<div class="faq-arrow">▾</div></div><div class="faq-a">没有，完全无水印。</div></div><div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)">在iPhone上有效吗？<div class="faq-arrow">▾</div></div><div class="faq-a">是的，通过Safari和Chrome。</div></div><div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)">免费吗？<div class="faq-arrow">▾</div></div><div class="faq-a">是的，完全免费。</div></div></div>
+    <div style="margin:36px 0">
+      <div class="ad-zone"><div class="ad-zone-label">广告</div>
+      <div class="ad-ph ad-resp">AdSense In-Content</div></div>
+    </div>
+    <div class="sec-tag" style="margin-bottom:18px">🔧 其他工具</div>
+    <div class="tools-grid">
+      <a href="mp3.html" class="tool-card"><div class="tool-card-icon">🎵</div><div class="tool-card-info"><strong>TikTok MP3</strong><span>MP3</span></div></a>
+      <a href="index.html" class="tool-card"><div class="tool-card-icon">🎬</div><div class="tool-card-info"><strong>TikTok Video</strong><span>下载视频</span></div></a>
+      <a href="photo.html" class="tool-card"><div class="tool-card-icon">🖼️</div><div class="tool-card-info"><strong>Photos</strong><span>照片</span></div></a>
+      <a href="douyin.html" class="tool-card"><div class="tool-card-icon">🇨🇳</div><div class="tool-card-info"><strong>Douyin</strong><span>抖音</span></div></a>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div style="text-align:center"><div class="ad-zone-label">广告</div>
+    <div class="ad-ph ad-300x250">AdSense 300×250</div></div>
+  </div>
+</div>
+<footer>
+  <div class="footer-ad">
+    <div class="ad-zone-label">广告</div>
+    <div class="ad-ph ad-728x90">AdSense Footer 728×90</div>
+  </div>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="logo"><div class="logo-icon">▼</div>Tiko<span>Save</span></div>
+      <p class="footer-desc">下载无水印TikTok视频最快的工具——完全免费，无需注册。</p>
+    </div>
+    <div class="footer-col"><h4>工具</h4><ul><li><a href="index.html">下载视频</a></li><li><a href="mp3.html">下载MP3</a></li><li><a href="story.html">故事</a></li><li><a href="photo.html">照片</a></li><li><a href="douyin.html">抖音</a></li></ul></div>
+    <div class="footer-col"><h4>页面</h4><ul><li><a href="blog.html">博客</a></li><li><a href="contact.html">联系我们</a></li></ul></div>
+    <div class="footer-col"><h4>法律</h4><ul><li><a href="privacy.html">隐私政策</a></li><li><a href="terms.html">使用条款</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 TikoSave — 版权所有</span>
+    <span>TikoSave与TikTok Inc.无关。</span>
+    <div class="social-links">
+      <a href="#" class="social-btn" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+      <a href="#" class="social-btn" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>
+      <a href="#" class="social-btn" aria-label="Email"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></a>
+      <a href="#" class="social-btn" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+    </div>
+  </div>
+</footer>
+<script>
+const WORKER_URL = 'https://tiktok-api.n-nsara959.workers.dev';
+function toggleMenu(){
+  const m=document.getElementById('navMenu');
+  const open=m.style.display==='flex';
+  m.style.display=open?'none':'flex';
+  if(!open){m.style.flexDirection='column';m.style.position='absolute';m.style.top='62px';m.style.right='0';m.style.left='0';m.style.background='#0d0d0d';m.style.padding='16px 5%';m.style.borderBottom='1px solid rgba(255,255,255,0.07)';m.style.gap='4px';}
+  else m.removeAttribute('style');
+}
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');});
+});
+async function pasteURL(){
+  try{const text=await navigator.clipboard.readText();document.getElementById('urlInput').value=text;}
+  catch{document.getElementById('urlInput').focus();}
+}
+async function startDownload(){
+  const url=document.getElementById('urlInput').value.trim();
+  const btn=document.getElementById('downloadBtn');
+  const prog=document.getElementById('progressWrap');
+  const errBox=document.getElementById('errorBox');
+  const resBox=document.getElementById('resultBox');
+  errBox.classList.remove('show');resBox.classList.remove('show');
+  if(!url){showError('Please paste a TikTok link first');return;}
+  const valid=/tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/i.test(url);
+  if(!valid){showError('Invalid link — please copy from TikTok app');return;}
+  btn.disabled=true;btn.textContent='⏳...';prog.classList.add('show');
+  try{
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const data=await res.json();
+    if(!res.ok||data.error)throw new Error(data.error||'Error');
+    renderResult(data);
+  }catch(e){showError(e.message||'Server error');}
+  finally{btn.disabled=false;btn.textContent='⬇ 下载';prog.classList.remove('show');}
+}
+function renderResult(data){
+  document.getElementById('resultTitle').textContent=data.title||'TikTok Video';
+  document.getElementById('resultAuthor').textContent='👤 '+(data.author||'');
+  document.getElementById('resultDur').textContent=data.duration?'⏱ '+fmtTime(data.duration):'';
+  if(data.thumbnail){const img=document.getElementById('resultThumb');img.src=data.thumbnail;img.style.display='block';document.getElementById('thumbPh').style.display='none';}
+  const fmtsEl=document.getElementById('resultFormats');fmtsEl.innerHTML='';
+  (data.formats||[]).forEach(f=>{
+    const row=document.createElement('div');row.className='fmt-row';
+    const ext=f.type==='audio'?'mp3':'mp4';
+    row.innerHTML=`<div class="fmt-info"><div class="fmt-label">${f.label}</div><div class="fmt-meta">${f.quality} · ${f.size}</div></div><button class="fmt-dl-btn" onclick="forceDownload('${f.url.replace(/'/g,"\'")}','tikosave.${ext}',this)">⬇ Download</button>`;
+    fmtsEl.appendChild(row);
+  });
+  document.getElementById('resultBox').classList.add('show');
+}
+function showError(msg){const el=document.getElementById('errorBox');el.textContent='⚠️ '+msg;el.classList.add('show');}
+function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function toggleFAQ(el){el.parentElement.classList.toggle('open');}
+function forceDownload(url,filename,btn){window.open(url,'_blank');const orig=btn.textContent;btn.textContent='✅';btn.disabled=true;setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);}
+document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='Enter')startDownload();});
+(function(){
+  const LANGS=[
+    {code:'ar',flag:'🇸🇦',label:'العربية',prefix:'../'},
+    {code:'en',flag:'🇺🇸',label:'English',prefix:'../en/'},
+    {code:'es',flag:'🇪🇸',label:'Español',prefix:'../es/'},
+    {code:'fr',flag:'🇫🇷',label:'Français',prefix:'../fr/'},
+    {code:'de',flag:'🇩🇪',label:'Deutsch',prefix:'../de/'},
+    {code:'zh',flag:'🇨🇳',label:'中文',prefix:'../zh/'},
+    {code:'ru',flag:'🇷🇺',label:'Русский',prefix:'../ru/'},
+  ];
+  const currentLang=document.documentElement.lang||'ar';
+  const parts=window.location.pathname.split('/');
+  let pageName=parts[parts.length-1]||'index.html';
+  if(!pageName.endsWith('.html'))pageName='index.html';
+  const sw=document.getElementById('langSwitcher');
+  if(!sw)return;
+  const current=LANGS.find(l=>l.code===currentLang)||LANGS[0];
+  let h=`<button class="lang-btn" onclick="this.nextElementSibling.classList.toggle('open')">${current.flag} ${current.label} ▾</button>`;
+  h+=`<div class="lang-dropdown" id="langDropdown">`;
+  LANGS.forEach(l=>{
+    const active=l.code===currentLang?' lang-active':'';
+    h+=`<a href="${l.prefix}${pageName}" class="lang-option${active}">${l.flag} ${l.label}</a>`;
+  });
+  h+=`</div>`;
+  sw.innerHTML=h;
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.lang-switcher')){var d=document.getElementById('langDropdown');if(d)d.classList.remove('open');}
+  });
+})();
+</script>
+</body>
+</html>
