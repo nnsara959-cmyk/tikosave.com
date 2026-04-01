@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# أهم الصفحات
+Allow: /index.html
+Allow: /mp3.html
+Allow: /story.html
+Allow: /photo.html
+Allow: /douyin.html
+Allow: /en/
+Allow: /fr/
+Allow: /es/
+Allow: /de/
+Allow: /zh/
+Allow: /ru/
+
+# ملف Sitemap
+Sitemap: https://tikosave.com/sitemap.xml
