@@ -1280,8 +1280,9 @@ document.addEventListener('click',function(e){if(!e.target.closest('.lang-switch
   const isRoot = (currentLang === 'ar');
 
   const parts = window.location.pathname.split('/');
-  let pageName = parts[parts.length - 1] || 'index.html';
-  if (!pageName.endsWith('.html')) pageName = 'index.html';
+  let pageName = parts[parts.length - 1] || '';
+  if (pageName === 'index.html') pageName = '';
+  if (!pageName.endsWith('.html') && pageName !== '') pageName = '';
 
   const switcher = document.getElementById('langSwitcher');
   if (!switcher) return;

@@ -1167,8 +1167,9 @@ document.addEventListener('click',function(e){
 
   // detect current page filename
   const parts = window.location.pathname.split('/');
-  let pageName = parts[parts.length - 1] || 'index.html';
-  if (!pageName.endsWith('.html')) pageName = 'index.html';
+  let pageName = parts[parts.length - 1] || '';
+  if (pageName === 'index.html') pageName = '';
+  if (!pageName.endsWith('.html') && pageName !== '') pageName = '';
 
   // build switcher
   const switcher = document.getElementById('langSwitcher');
