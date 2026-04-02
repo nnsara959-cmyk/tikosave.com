@@ -870,7 +870,46 @@
     .social-btn:nth-child(3) { background: #ea4335; }
     .social-btn:nth-child(4) { background: #0077b5; }
     @media(max-width:900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
-    @media(max-width:480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } .footer-bottom { flex-direction: column; align-items: flex-start; } }</style>
+    @media(max-width:480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } .footer-bottom { flex-direction: column; align-items: flex-start; } }
+    /* ══ Accessibility Fixes ══ */
+
+    /* 1. إصلاح تباين نص الإعلان - من رمادي خافت إلى رمادي مقروء */
+    .ad-zone-label {
+      font-size: 10px;
+      color: #767676 !important;   /* نسبة تباين 4.54:1 على الخلفية الداكنة */
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* 2. إصلاح تباين placeholder */
+    .url-input::placeholder {
+      color: #888888 !important;
+    }
+
+    /* 3. تباين نص footer */
+    footer .footer-col ul li a {
+      color: #aaaaaa !important;
+    }
+    .footer-bottom span {
+      color: #888888 !important;
+    }
+    .footer-desc {
+      color: #999999 !important;
+    }
+
+    
+    .footer-col-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0;
+    }
+
+    </style>
   <style>
     .nav-active { color: var(--pink) !important; }
   </style>
@@ -896,10 +935,11 @@
   </ul>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="lang-switcher" id="langSwitcher"></div>
-    <div class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation menu"><span></span><span></span><span></span></div>
   </div>
 </nav>
 
+<main id="main-content">
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-content">
@@ -909,7 +949,7 @@
     <div class="dl-box">
       <div class="input-row">
         <input type="text" class="url-input" id="urlInput" placeholder="https://www.tiktok.com/@username/video/..." autocomplete="off" spellcheck="false" dir="ltr"/>
-        <button class="paste-btn" onclick="pasteURL()">📋 Paste</button>
+        <button class="paste-btn" onclick="pasteURL()" aria-label="Paste URL from clipboard">📋 Paste</button>
         <button class="dl-main-btn" id="downloadBtn" onclick="startDownload()">⬇ Download</button>
       </div>
       <div class="chips"><div class="chip active">🚫 No Watermark</div><div class="chip ">🎵 MP3 Audio</div><div class="chip ">🎬 HD Quality</div></div>
@@ -972,6 +1012,8 @@
   </div>
 </div>
 
+</main>
+
 <footer>
   <div class="footer-ad">
     <div class="ad-zone-label">Advertisement</div>
@@ -982,9 +1024,9 @@
       <div class="logo"><div class="logo-icon">▼</div>Tiko<span>Save</span></div>
       <p class="footer-desc">The fastest tool to download TikTok videos without watermark — completely free and no registration needed.</p>
     </div>
-    <div class="footer-col"><h4>Tools</h4><ul><li><a href="./">Download Video</a></li><li><a href="mp3.html">Download MP3</a></li><li><a href="story.html">Story</a></li><li><a href="photo.html">Photos</a></li><li><a href="douyin.html">Douyin</a></li></ul></div>
-    <div class="footer-col"><h4>Pages</h4><ul><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
-    <div class="footer-col"><h4>Legal</h4><ul><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Use</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">Tools</p><ul><li><a href="./">Download Video</a></li><li><a href="mp3.html">Download MP3</a></li><li><a href="story.html">Story</a></li><li><a href="photo.html">Photos</a></li><li><a href="douyin.html">Douyin</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">Pages</p><ul><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">Legal</p><ul><li><a href="privacy.html">Privacy Policy</a></li><li><a href="terms.html">Terms of Use</a></li></ul></div>
   </div>
   <div class="footer-bottom">
     <span>© 2025 TikoSave — All rights reserved</span>

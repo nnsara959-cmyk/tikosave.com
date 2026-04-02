@@ -871,6 +871,45 @@
     .social-btn:nth-child(4) { background: #0077b5; }
     @media(max-width:900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
     @media(max-width:480px) { .footer-grid { grid-template-columns: 1fr; gap: 24px; } .footer-bottom { flex-direction: column; align-items: flex-start; } }
+    
+    /* ══ Accessibility Fixes ══ */
+
+    /* 1. إصلاح تباين نص الإعلان - من رمادي خافت إلى رمادي مقروء */
+    .ad-zone-label {
+      font-size: 10px;
+      color: #767676 !important;   /* نسبة تباين 4.54:1 على الخلفية الداكنة */
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* 2. إصلاح تباين placeholder */
+    .url-input::placeholder {
+      color: #888888 !important;
+    }
+
+    /* 3. تباين نص footer */
+    footer .footer-col ul li a {
+      color: #aaaaaa !important;
+    }
+    .footer-bottom span {
+      color: #888888 !important;
+    }
+    .footer-desc {
+      color: #999999 !important;
+    }
+
+    
+    .footer-col-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0;
+    }
+
     </style>
   <style>
     .nav-active { color: var(--pink) !important; }
@@ -898,10 +937,11 @@
   </ul>
   <div style="display:flex;align-items:center;gap:10px">
     <div class="lang-switcher" id="langSwitcher"></div>
-    <div class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+    <div class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation menu"><span></span><span></span><span></span></div>
   </div>
 </nav>
 
+<main id="main-content">
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-content">
@@ -911,7 +951,7 @@
     <div class="dl-box">
       <div class="input-row">
         <input type="text" class="url-input" id="urlInput" placeholder="https://www.tiktok.com/@username/video/..." autocomplete="off" spellcheck="false"/>
-        <button class="paste-btn" onclick="pasteURL()">📋 لصق</button>
+        <button class="paste-btn" onclick="pasteURL()" aria-label="لصق الرابط من الحافظة">📋 لصق</button>
         <button class="dl-main-btn" id="downloadBtn" onclick="startDownload()">⬇ تحميل</button>
       </div>
       <div class="chips"><div class="chip active">🚫 بدون علامة مائية</div><div class="chip ">🎵 MP3 صوت فقط</div><div class="chip ">🎬 HD جودة عالية</div></div>
@@ -1050,6 +1090,8 @@
   </div>
 </div>
 
+</main>
+
 <footer>
   <div class="footer-ad">
     <div class="ad-zone-label">إعلان</div>
@@ -1060,9 +1102,9 @@
       <div class="logo" dir="ltr"><div class="logo-icon">▼</div>Tiko<span>Save</span></div>
       <p class="footer-desc">أسرع أداة لتحميل فيديوهات TikTok بدون علامة مائية — مجانية تماماً ولا تتطلب تسجيلاً.</p>
     </div>
-    <div class="footer-col"><h4>الأدوات</h4><ul><li><a href="./">تحميل فيديو</a></li><li><a href="mp3.html">تحميل MP3</a></li><li><a href="story.html">ستوري (Story)</a></li><li><a href="photo.html">صور</a></li><li><a href="douyin.html">دوين (Douyin)</a></li></ul></div>
-    <div class="footer-col"><h4>الصفحات</h4><ul><li><a href="blog.html">المدونة</a></li><li><a href="contact.html">اتصل بنا</a></li></ul></div>
-    <div class="footer-col"><h4>قانوني</h4><ul><li><a href="privacy.html">سياسة الخصوصية</a></li><li><a href="terms.html">شروط الاستخدام</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">الأدوات</p><ul><li><a href="./">تحميل فيديو</a></li><li><a href="mp3.html">تحميل MP3</a></li><li><a href="story.html">ستوري (Story)</a></li><li><a href="photo.html">صور</a></li><li><a href="douyin.html">دوين (Douyin)</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">الصفحات</p><ul><li><a href="blog.html">المدونة</a></li><li><a href="contact.html">اتصل بنا</a></li></ul></div>
+    <div class="footer-col"><p class="footer-col-title">قانوني</p><ul><li><a href="privacy.html">سياسة الخصوصية</a></li><li><a href="terms.html">شروط الاستخدام</a></li></ul></div>
   </div>
   <div class="footer-bottom">
     <span>© 2025 TikoSave — جميع الحقوق محفوظة</span>
