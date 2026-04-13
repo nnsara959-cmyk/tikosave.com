@@ -1171,17 +1171,45 @@ async function startDownload() {
   btn.textContent = '⏳ جارٍ المعالجة...';
   prog.classList.add('show');
 
+  // ── fetch مع retry تلقائي ──────────────────────────────
+  async function fetchWithRetry(url, options, retries = 2) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 55000); // 55 ثانية timeout
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        // تأكد أن الرد JSON وليس HTML
+        const text = await res.text();
+        if (text.trim().startsWith('<')) {
+          throw new Error('الخادم يستيقظ، يرجى الانتظار...');
+        }
+        return JSON.parse(text);
+      } catch (err) {
+        if (i === retries) throw err;
+        // رسالة انتظار بين المحاولات
+        btn.textContent = `⏳ محاولة ${i + 2}/${retries + 1}...`;
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    }
+  }
+
   try {
-    const res  = await fetch(WORKER_URL, {
+    btn.textContent = '⏳ جارٍ الاتصال...';
+    const data = await fetchWithRetry(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'حدث خطأ غير متوقع');
+    if (data.error) throw new Error(data.error);
     renderResult(data);
   } catch (e) {
-    showError(e.message || 'تعذّر الاتصال بالخادم. حاول مجدداً.');
+    const msg = e.message || '';
+    if (msg.includes('يستيقظ') || msg.includes('abort') || msg.includes('fetch')) {
+      showError('الخادم يستيقظ — انتظر 30 ثانية وأعد المحاولة');
+    } else {
+      showError(msg || 'تعذّر الاتصال بالخادم. حاول مجدداً.');
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = '⬇ تحميل';

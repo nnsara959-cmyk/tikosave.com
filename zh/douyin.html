@@ -312,12 +312,33 @@ async function startDownload(){
   const valid=/tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/i.test(url);
   if(!valid){showError('Invalid link — please copy from TikTok app');return;}
   btn.disabled=true;btn.textContent='⏳...';prog.classList.add('show');
+  async function fetchWithRetry(urlR,options,retries=2){
+    for(let i=0;i<=retries;i++){
+      try{
+        const controller=new AbortController();
+        const timer=setTimeout(()=>controller.abort(),55000);
+        const res=await fetch(urlR,{...options,signal:controller.signal});
+        clearTimeout(timer);
+        const text=await res.text();
+        if(text.trim().startsWith('<'))throw new Error('waking');
+        return JSON.parse(text);
+      }catch(err){
+        if(i===retries)throw err;
+        btn.textContent='⏳ '+(i+2)+'/'+(retries+1)+'...';
+        await new Promise(r=>setTimeout(r,4000));
+      }
+    }
+  }
   try{
-    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    const data=await res.json();
-    if(!res.ok||data.error)throw new Error(data.error||'Error');
+    const data=await fetchWithRetry(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    if(data.error)throw new Error(data.error);
     renderResult(data);
-  }catch(e){showError(e.message||'Server error');}
+  }catch(e){
+    const msg=e.message||'';
+    if(msg.includes('waking')||msg.includes('abort')||msg.includes('fetch')){
+      showError('Server is starting — wait 30 seconds and retry');
+    }else{showError(msg||'Server error');}
+  }
   finally{btn.disabled=false;btn.textContent='⬇ 下载';prog.classList.remove('show');}
 }
 function renderResult(data){

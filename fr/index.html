@@ -1060,17 +1060,38 @@ async function startDownload() {
   btn.textContent = '⏳ Traitement...';
   prog.classList.add('show');
 
+    async function fetchWithRetry(urlR, options, retries = 2) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 55000);
+        const res = await fetch(urlR, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        const text = await res.text();
+        if (text.trim().startsWith('<')) throw new Error('waking');
+        return JSON.parse(text);
+      } catch (err) {
+        if (i === retries) throw err;
+        btn.textContent = '⏳ ' + (i + 2) + '/' + (retries + 1) + '...';
+        await new Promise(r => setTimeout(r, 4000));
+      }
+    }
+  }
   try {
-    const res  = await fetch(WORKER_URL, {
+    const data = await fetchWithRetry(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'حدث خطأ غير متوقع');
+    if (data.error) throw new Error(data.error);
     renderResult(data);
   } catch (e) {
-    showError(e.message || 'Erreur serveur. Veuillez réessayer.');
+    const msg = e.message || '';
+    if (msg.includes('waking') || msg.includes('abort') || msg.includes('fetch')) {
+      showError('Server is starting — wait 30 seconds and retry');
+    } else {
+      showError(msg || 'Erreur serveur. Veuillez réessayer.');
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = '⬇ Télécharger';
