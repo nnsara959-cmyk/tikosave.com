@@ -1128,50 +1128,47 @@ function renderResult(d, originalUrl) {
     document.getElementById('thumbPh').style.display = 'none';
   }
 
-  // روابط TikTok CDN المباشرة تُعطي 403 في المتصفح
-  // نمرر كل تحميل فيديو عبر البروكسي لتجاوز الحماية
-  const proxyBase = `${API_URL}/download?url=${encodeURIComponent(originalUrl)}`;
-
+  // بناء أزرار التحميل من البيانات الجديدة
   const fmtsEl = document.getElementById('resultFormats');
   fmtsEl.innerHTML = '';
 
-  // الزر الرئيسي — عبر البروكسي (يعمل دائماً)
-  const mainRow = document.createElement('div');
-  mainRow.className = 'fmt-row';
-  mainRow.innerHTML = `
-    <div class="fmt-info">
-      <div class="fmt-label">بدون علامة مائية</div>
-      <div class="fmt-meta">عبر البروكسي — يعمل دائماً</div>
-    </div>
-    <button class="fmt-dl-btn" onclick="forceDownload('${proxyBase}','tikosave.mp4',this)">
-      ⬇ تحميل
-    </button>
-  `;
-  fmtsEl.appendChild(mainRow);
+  const formats = [];
+  if (d.video_hd || d.hdplay)  formats.push({ label: 'HD بدون علامة مائية',  quality: '1080p', url: d.video_hd || d.hdplay,  type: 'video' });
+  if (d.video_url || d.play)   formats.push({ label: 'SD بدون علامة مائية',  quality: '720p',  url: d.video_url || d.play,   type: 'video' });
+  if (d.wmplay)                 formats.push({ label: 'نسخة مع العلامة المائية', quality: '720p',  url: d.wmplay,                 type: 'video' });
+  if (d.music)                  formats.push({ label: 'MP3 — الموسيقى فقط', quality: 'audio', url: d.music,                type: 'audio' });
 
-  // روابط إضافية
-  const extras = [];
-  if (d.video_hd || d.hdplay) extras.push({ label: 'HD مباشر', quality: '1080p', url: d.video_hd || d.hdplay, type: 'video' });
-  if (d.wmplay)                extras.push({ label: 'مع العلامة المائية', quality: '720p', url: d.wmplay, type: 'video' });
-  if (d.music)                 extras.push({ label: 'MP3 — الموسيقى فقط', quality: 'audio', url: d.music, type: 'audio' });
-
-  extras.forEach(f => {
+  formats.forEach(f => {
     const row = document.createElement('div');
     row.className = 'fmt-row';
-    const safeUrl = f.url.replace(/\/g,'\\').replace(/'/g,"\'");
     const ext  = f.type === 'audio' ? 'mp3' : 'mp4';
+    const name = 'tikosave.' + ext;
     row.innerHTML = `
       <div class="fmt-info">
         <div class="fmt-label">${f.label}</div>
         <div class="fmt-meta">${f.quality}</div>
       </div>
       <button class="fmt-dl-btn ${f.type === 'audio' ? 'audio' : ''}"
-         onclick="forceDownload('${safeUrl}','tikosave.${ext}',this)">
+         onclick="forceDownload('${f.url.replace(/'/g,"\\'")}',' ${name}',this)">
         ⬇ تحميل
       </button>
     `;
     fmtsEl.appendChild(row);
   });
+
+  // Proxy download button
+  const proxyRow = document.createElement('div');
+  proxyRow.className = 'fmt-row';
+  proxyRow.innerHTML = `
+    <div class="fmt-info">
+      <div class="fmt-label">⬇ Direct Download</div>
+      <div class="fmt-meta">via proxy</div>
+    </div>
+    <button class="fmt-dl-btn" onclick="window.open('${API_URL}/download?url=${encodeURIComponent(originalUrl)}','_blank')">
+      ⬇ تحميل
+    </button>
+  `;
+  fmtsEl.appendChild(proxyRow);
 
   document.getElementById('resultBox').classList.add('show');
   document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
