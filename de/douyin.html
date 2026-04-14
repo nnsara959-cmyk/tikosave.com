@@ -285,76 +285,105 @@
     </div>
   </div>
 </footer>
-<script>
-const WORKER_URL = 'https://tiktok-2bxo.onrender.com';
-function toggleMenu(){
-  const m=document.getElementById('navMenu');
-  const open=m.style.display==='flex';
-  m.style.display=open?'none':'flex';
-  if(!open){m.style.flexDirection='column';m.style.position='absolute';m.style.top='62px';m.style.right='0';m.style.left='0';m.style.background='#0d0d0d';m.style.padding='16px 5%';m.style.borderBottom='1px solid rgba(255,255,255,0.07)';m.style.gap='4px';}
-  else m.removeAttribute('style');
-}
-document.querySelectorAll('.chip').forEach(chip=>{
-  chip.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');});
-});
-async function pasteURL(){
-  try{const text=await navigator.clipboard.readText();document.getElementById('urlInput').value=text;}
-  catch{document.getElementById('urlInput').focus();}
-}
-async function startDownload(){
-  const url=document.getElementById('urlInput').value.trim();
-  const btn=document.getElementById('downloadBtn');
-  const prog=document.getElementById('progressWrap');
-  const errBox=document.getElementById('errorBox');
-  const resBox=document.getElementById('resultBox');
-  errBox.classList.remove('show');resBox.classList.remove('show');
-  if(!url){showError('Please paste a TikTok link first');return;}
-  const valid=/tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/i.test(url);
-  if(!valid){showError('Invalid link — please copy from TikTok app');return;}
-  btn.disabled=true;btn.textContent='⏳...';prog.classList.add('show');
-  async function fetchWithRetry(urlR,options,retries=2){
-    for(let i=0;i<=retries;i++){
-      try{
-        const controller=new AbortController();
-        const timer=setTimeout(()=>controller.abort(),55000);
-        const res=await fetch(urlR,{...options,signal:controller.signal});
-        clearTimeout(timer);
-        const text=await res.text();
-        if(text.trim().startsWith('<'))throw new Error('waking');
-        return JSON.parse(text);
-      }catch(err){
-        if(i===retries)throw err;
-        btn.textContent='⏳ '+(i+2)+'/'+(retries+1)+'...';
-        await new Promise(r=>setTimeout(r,4000));
-      }
+<script>// ── API Configuration ──
+const API_URL = 'https://tiktok-2bxo.onrender.com';
+
+// ── Download ──
+async function startDownload() {
+  const url     = document.getElementById('urlInput').value.trim();
+  const btn     = document.getElementById('downloadBtn');
+  const prog    = document.getElementById('progressWrap');
+  const errBox  = document.getElementById('errorBox');
+  const resBox  = document.getElementById('resultBox');
+
+  errBox.classList.remove('show');
+  resBox.classList.remove('show');
+
+  if (!url) { showError('Bitte TikTok-Link einfügen'); return; }
+
+  const valid = /tiktok\.com|vm\.tiktok|vt\.tiktok|douyin\.com/i.test(url);
+  if (!valid) { showError('Ungültiger Link — von TikTok kopieren'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Verarbeitung...';
+  prog.classList.add('show');
+
+  try {
+    // استخدام GET /info بدل POST
+    const res  = await fetch(`${API_URL}/info?url=${encodeURIComponent(url)}`);
+    const json = await res.json();
+    if (!json.success || !json.data) {
+      throw new Error(json.error || 'Video nicht gefunden');
     }
+    renderResult(json.data, url);
+  } catch (e) {
+    showError(e.message || 'Serverfehler. Bitte erneut versuchen.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬇ Herunterladen';
+    prog.classList.remove('show');
   }
-  try{
-    const data=await fetchWithRetry(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    if(data.error)throw new Error(data.error);
-    renderResult(data);
-  }catch(e){
-    const msg=e.message||'';
-    if(msg.includes('waking')||msg.includes('abort')||msg.includes('fetch')){
-      showError('Server is starting — wait 30 seconds and retry');
-    }else{showError(msg||'Server error');}
-  }
-  finally{btn.disabled=false;btn.textContent='⬇ Herunterladen';prog.classList.remove('show');}
 }
-function renderResult(data){
-  document.getElementById('resultTitle').textContent=data.title||'TikTok Video';
-  document.getElementById('resultAuthor').textContent='👤 '+(data.author||'');
-  document.getElementById('resultDur').textContent=data.duration?'⏱ '+fmtTime(data.duration):'';
-  if(data.thumbnail){const img=document.getElementById('resultThumb');img.src=data.thumbnail;img.style.display='block';document.getElementById('thumbPh').style.display='none';}
-  const fmtsEl=document.getElementById('resultFormats');fmtsEl.innerHTML='';
-  (data.formats||[]).forEach(f=>{
-    const row=document.createElement('div');row.className='fmt-row';
-    const ext=f.type==='audio'?'mp3':'mp4';
-    row.innerHTML=`<div class="fmt-info"><div class="fmt-label">${f.label}</div><div class="fmt-meta">${f.quality} · ${f.size}</div></div><button class="fmt-dl-btn" onclick="forceDownload('${f.url.replace(/'/g,"\'")}','tikosave.${ext}',this)">⬇ Download</button>`;
+
+function renderResult(d, originalUrl) {
+  document.getElementById('resultTitle').textContent  = d.title  || 'TikTok Video';
+  document.getElementById('resultAuthor').textContent = '👤 ' + (d.author || '');
+  document.getElementById('resultDur').textContent    = d.duration_sec ? '⏱ ' + fmtTime(d.duration_sec) : (d.duration ? '⏱ ' + d.duration : '');
+
+  if (d.thumbnail) {
+    const img = document.getElementById('resultThumb');
+    img.src = d.thumbnail;
+    img.style.display = 'block';
+    document.getElementById('thumbPh').style.display = 'none';
+  }
+
+  // بناء أزرار التحميل من البيانات الجديدة
+  const fmtsEl = document.getElementById('resultFormats');
+  fmtsEl.innerHTML = '';
+
+  const formats = [];
+  if (d.video_hd || d.hdplay)  formats.push({ label: 'HD Ohne Wasserzeichen',  quality: '1080p', url: d.video_hd || d.hdplay,  type: 'video' });
+  if (d.video_url || d.play)   formats.push({ label: 'SD Ohne Wasserzeichen',  quality: '720p',  url: d.video_url || d.play,   type: 'video' });
+  if (d.wmplay)                 formats.push({ label: 'Mit Wasserzeichen', quality: '720p',  url: d.wmplay,                 type: 'video' });
+  if (d.music)                  formats.push({ label: 'MP3 Audio', quality: 'audio', url: d.music,                type: 'audio' });
+
+  formats.forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'fmt-row';
+    const ext  = f.type === 'audio' ? 'mp3' : 'mp4';
+    const name = 'tikosave.' + ext;
+    row.innerHTML = `
+      <div class="fmt-info">
+        <div class="fmt-label">${f.label}</div>
+        <div class="fmt-meta">${f.quality}</div>
+      </div>
+      <button class="fmt-dl-btn ${f.type === 'audio' ? 'audio' : ''}"
+         onclick="forceDownload('${f.url.replace(/'/g,"\\'")}',' ${name}',this)">
+        ⬇ Herunterladen
+      </button>
+    `;
     fmtsEl.appendChild(row);
   });
+
+  // Proxy download button
+  const proxyRow = document.createElement('div');
+  proxyRow.className = 'fmt-row';
+  proxyRow.innerHTML = `
+    <div class="fmt-info">
+      <div class="fmt-label">⬇ Direct Download</div>
+      <div class="fmt-meta">via proxy</div>
+    </div>
+    <button class="fmt-dl-btn" onclick="window.open('${API_URL}/download?url=${encodeURIComponent(originalUrl)}','_blank')">
+      ⬇ Herunterladen
+    </button>
+  `;
+  fmtsEl.appendChild(proxyRow);
+
   document.getElementById('resultBox').classList.add('show');
+  document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
+
 function showError(msg){const el=document.getElementById('errorBox');el.textContent='⚠️ '+msg;el.classList.add('show');}
 function fmtTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 function toggleFAQ(el){el.parentElement.classList.toggle('open');}
@@ -389,6 +418,50 @@ document.getElementById('urlInput').addEventListener('keydown',e=>{if(e.key==='E
     if(!e.target.closest('.lang-switcher')){var d=document.getElementById('langDropdown');if(d)d.classList.remove('open');}
   });
 })();
+
+// ── Paste URL ──
+async function pasteURL() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.getElementById('urlInput');
+    if (input) input.value = text.trim();
+  } catch {
+    const input = document.getElementById('urlInput');
+    if (input) input.focus();
+  }
+}
+
+
+// ── Mobile Menu ──
+function toggleMenu() {
+  const menu = document.getElementById('navMenu');
+  if (!menu) return;
+  const isOpen = menu.style.display === 'flex' && menu.style.position === 'absolute';
+  if (isOpen) {
+    menu.removeAttribute('style');
+  } else {
+    menu.style.display = 'flex';
+    menu.style.flexDirection = 'column';
+    menu.style.position = 'absolute';
+    menu.style.top = '62px';
+    menu.style.right = '0';
+    menu.style.left = '0';
+    menu.style.background = 'var(--bg2, #111)';
+    menu.style.padding = '12px 5%';
+    menu.style.borderBottom = '1px solid rgba(255,255,255,0.07)';
+    menu.style.gap = '4px';
+    menu.style.zIndex = '300';
+  }
+}
+// Close menu on outside click
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('navMenu');
+  const hamburger = document.getElementById('hamburger');
+  if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+    menu.removeAttribute('style');
+  }
+});
+
 </script>
 </body>
 </html>

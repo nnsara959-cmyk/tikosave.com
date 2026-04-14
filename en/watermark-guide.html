@@ -153,7 +153,7 @@
       font-weight: 700 !important;
       border-radius: 9px !important;
     }
-    .nav-cta:hover { opacity: 0.9; background: var(--bg3) !important; }
+    .nav-cta:hover { opacity: 0.88; }
 
     .hamburger {
       display: none;
@@ -810,9 +810,7 @@
       white-space: nowrap;
     }
     .lang-btn:hover { background: var(--bg4); }
-    .lang-dropdown {
-      display: none;
-      position: absolute;
+    .lang-dropdown {position: absolute;
       top: calc(100% + 8px);
       left: 0;
       background: var(--bg2);
@@ -1118,44 +1116,8 @@
   </div>
 </footer>
 <script>
-// ╔══════════════════════════════════════════════════════════╗
-// ║  ✏️  غيّر هذا الرابط برابط Cloudflare Worker الخاص بك ║
-// ║  مثال: https://tiktok-worker.your-name.workers.dev      ║
-// ╚══════════════════════════════════════════════════════════╝
-const WORKER_URL = 'https://tiktok-2bxo.onrender.com';
-
-// ── Mobile Menu ──
-function toggleMenu() {
-  const menu = document.getElementById('navMenu');
-  menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-  menu.style.flexDirection = 'column';
-  menu.style.position = 'absolute';
-  menu.style.top = '62px';
-  menu.style.right = '0';
-  menu.style.left = '0';
-  menu.style.background = '#0d0d0d';
-  menu.style.padding = '16px 5%';
-  menu.style.borderBottom = '1px solid rgba(255,255,255,0.07)';
-  menu.style.gap = '4px';
-}
-
-// ── Chips ──
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-  });
-});
-
-// ── Paste ──
-async function pasteURL() {
-  try {
-    const text = await navigator.clipboard.readText();
-    document.getElementById('urlInput').value = text;
-  } catch {
-    document.getElementById('urlInput').focus();
-  }
-}
+// ── API Configuration ──
+const API_URL = 'https://tiktok-2bxo.onrender.com';
 
 // ── Download ──
 async function startDownload() {
@@ -1177,38 +1139,16 @@ async function startDownload() {
   btn.textContent = '⏳ Processing...';
   prog.classList.add('show');
 
-    async function fetchWithRetry(urlR, options, retries = 2) {
-    for (let i = 0; i <= retries; i++) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 55000);
-        const res = await fetch(urlR, { ...options, signal: controller.signal });
-        clearTimeout(timer);
-        const text = await res.text();
-        if (text.trim().startsWith('<')) throw new Error('waking');
-        return JSON.parse(text);
-      } catch (err) {
-        if (i === retries) throw err;
-        btn.textContent = '⏳ ' + (i + 2) + '/' + (retries + 1) + '...';
-        await new Promise(r => setTimeout(r, 4000));
-      }
-    }
-  }
   try {
-    const data = await fetchWithRetry(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    if (data.error) throw new Error(data.error);
-    renderResult(data);
-  } catch (e) {
-    const msg = e.message || '';
-    if (msg.includes('waking') || msg.includes('abort') || msg.includes('fetch')) {
-      showError('Server is starting — wait 30 seconds and retry');
-    } else {
-      showError(msg || 'Server error. Please try again.');
+    // استخدام GET /info بدل POST
+    const res  = await fetch(`${API_URL}/info?url=${encodeURIComponent(url)}`);
+    const json = await res.json();
+    if (!json.success || !json.data) {
+      throw new Error(json.error || 'Video not found');
     }
+    renderResult(json.data, url);
+  } catch (e) {
+    showError(e.message || 'Server error. Please try again.');
   } finally {
     btn.disabled = false;
     btn.textContent = '⬇ Download';
@@ -1216,41 +1156,64 @@ async function startDownload() {
   }
 }
 
-function renderResult(data) {
-  document.getElementById('resultTitle').textContent  = data.title  || 'TikTok Video';
-  document.getElementById('resultAuthor').textContent = '👤 ' + (translateLabel(data.author) || 'Unknown');
-  document.getElementById('resultDur').textContent    = data.duration ? '⏱ ' + fmtTime(data.duration) : '';
+function renderResult(d, originalUrl) {
+  document.getElementById('resultTitle').textContent  = d.title  || 'TikTok Video';
+  document.getElementById('resultAuthor').textContent = '👤 ' + (d.author || '');
+  document.getElementById('resultDur').textContent    = d.duration_sec ? '⏱ ' + fmtTime(d.duration_sec) : (d.duration ? '⏱ ' + d.duration : '');
 
-  if (data.thumbnail) {
+  if (d.thumbnail) {
     const img = document.getElementById('resultThumb');
-    img.src = data.thumbnail;
+    img.src = d.thumbnail;
     img.style.display = 'block';
     document.getElementById('thumbPh').style.display = 'none';
   }
 
+  // بناء أزرار التحميل من البيانات الجديدة
   const fmtsEl = document.getElementById('resultFormats');
   fmtsEl.innerHTML = '';
-  (data.formats || []).forEach(f => {
+
+  const formats = [];
+  if (d.video_hd || d.hdplay)  formats.push({ label: 'HD No Watermark',  quality: '1080p', url: d.video_hd || d.hdplay,  type: 'video' });
+  if (d.video_url || d.play)   formats.push({ label: 'SD No Watermark',  quality: '720p',  url: d.video_url || d.play,   type: 'video' });
+  if (d.wmplay)                 formats.push({ label: 'With Watermark', quality: '720p',  url: d.wmplay,                 type: 'video' });
+  if (d.music)                  formats.push({ label: 'MP3 Audio Only', quality: 'audio', url: d.music,                type: 'audio' });
+
+  formats.forEach(f => {
     const row = document.createElement('div');
     row.className = 'fmt-row';
     const ext  = f.type === 'audio' ? 'mp3' : 'mp4';
-    const name = 'tikosave-video.' + ext;
+    const name = 'tikosave.' + ext;
     row.innerHTML = `
       <div class="fmt-info">
-        <div class="fmt-label">${translateLabel(f.label)}</div>
-        <div class="fmt-meta">${f.quality} · ${translateLabel(f.size)}</div>
+        <div class="fmt-label">${f.label}</div>
+        <div class="fmt-meta">${f.quality}</div>
       </div>
       <button class="fmt-dl-btn ${f.type === 'audio' ? 'audio' : ''}"
-         onclick="forceDownload('${f.url.replace(/'/g,"\\'")}','${name}',this)">
+         onclick="forceDownload('${f.url.replace(/'/g,"\\'")}',' ${name}',this)">
         ⬇ Download
       </button>
     `;
     fmtsEl.appendChild(row);
   });
 
+  // Proxy download button
+  const proxyRow = document.createElement('div');
+  proxyRow.className = 'fmt-row';
+  proxyRow.innerHTML = `
+    <div class="fmt-info">
+      <div class="fmt-label">⬇ Direct Download</div>
+      <div class="fmt-meta">via proxy</div>
+    </div>
+    <button class="fmt-dl-btn" onclick="window.open('${API_URL}/download?url=${encodeURIComponent(originalUrl)}','_blank')">
+      ⬇ Download
+    </button>
+  `;
+  fmtsEl.appendChild(proxyRow);
+
   document.getElementById('resultBox').classList.add('show');
   document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
 
 function showError(msg) {
   const el = document.getElementById('errorBox');
@@ -1352,6 +1315,37 @@ const LABEL_MAP = {
 function translateLabel(text) {
   return LABEL_MAP[text] || text;
 }
+
+
+// ── Mobile Menu ──
+function toggleMenu() {
+  const menu = document.getElementById('navMenu');
+  if (!menu) return;
+  const isOpen = menu.style.display === 'flex' && menu.style.position === 'absolute';
+  if (isOpen) {
+    menu.removeAttribute('style');
+  } else {
+    menu.style.display = 'flex';
+    menu.style.flexDirection = 'column';
+    menu.style.position = 'absolute';
+    menu.style.top = '62px';
+    menu.style.right = '0';
+    menu.style.left = '0';
+    menu.style.background = 'var(--bg2, #111)';
+    menu.style.padding = '12px 5%';
+    menu.style.borderBottom = '1px solid rgba(255,255,255,0.07)';
+    menu.style.gap = '4px';
+    menu.style.zIndex = '300';
+  }
+}
+// Close menu on outside click
+document.addEventListener('click', function(e) {
+  const menu = document.getElementById('navMenu');
+  const hamburger = document.getElementById('hamburger');
+  if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+    menu.removeAttribute('style');
+  }
+});
 
 </script>
 </body>
