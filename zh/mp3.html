@@ -1048,47 +1048,45 @@ function renderResult(d, originalUrl) {
     document.getElementById('thumbPh').style.display = 'none';
   }
 
-  // بناء أزرار التحميل من البيانات الجديدة
+  const proxyBase = `${API_URL}/download?url=${encodeURIComponent(originalUrl)}`;
   const fmtsEl = document.getElementById('resultFormats');
   fmtsEl.innerHTML = '';
 
-  const formats = [];
-  if (d.video_hd || d.hdplay)  formats.push({ label: 'HD无水印',  quality: '1080p', url: d.video_hd || d.hdplay,  type: 'video' });
-  if (d.video_url || d.play)   formats.push({ label: 'SD无水印',  quality: '720p',  url: d.video_url || d.play,   type: 'video' });
-  if (d.wmplay)                 formats.push({ label: '带水印', quality: '720p',  url: d.wmplay,                 type: 'video' });
-  if (d.music)                  formats.push({ label: '仅MP3音频', quality: 'audio', url: d.music,                type: 'audio' });
+  const mainRow = document.createElement('div');
+  mainRow.className = 'fmt-row';
+  mainRow.innerHTML = `
+    <div class="fmt-info">
+      <div class="fmt-label">无水印</div>
+      <div class="fmt-meta">通过代理 — 始终有效</div>
+    </div>
+    <button class="fmt-dl-btn" onclick="forceDownload('${proxyBase}','tikosave.mp4',this)">
+      ⬇ 下载
+    </button>
+  `;
+  fmtsEl.appendChild(mainRow);
 
-  formats.forEach(f => {
+  const extras = [];
+  if (d.video_hd || d.hdplay) extras.push({ label: 'HD直链',  quality: '1080p', url: d.video_hd || d.hdplay, type: 'video' });
+  if (d.wmplay)                extras.push({ label: '带水印',  quality: '720p',  url: d.wmplay,               type: 'video' });
+  if (d.music)                 extras.push({ label: '仅MP3音频', quality: 'audio', url: d.music,                type: 'audio' });
+
+  extras.forEach(f => {
     const row = document.createElement('div');
     row.className = 'fmt-row';
+    const safeUrl = encodeURIComponent(f.url);
     const ext  = f.type === 'audio' ? 'mp3' : 'mp4';
-    const name = 'tikosave.' + ext;
     row.innerHTML = `
       <div class="fmt-info">
         <div class="fmt-label">${f.label}</div>
         <div class="fmt-meta">${f.quality}</div>
       </div>
       <button class="fmt-dl-btn ${f.type === 'audio' ? 'audio' : ''}"
-         onclick="forceDownload('${f.url.replace(/'/g,"\\'")}',' ${name}',this)">
+         onclick="forceDownload(decodeURIComponent('${safeUrl}'),'tikosave.${ext}',this)">
         ⬇ 下载
       </button>
     `;
     fmtsEl.appendChild(row);
   });
-
-  // Proxy download button
-  const proxyRow = document.createElement('div');
-  proxyRow.className = 'fmt-row';
-  proxyRow.innerHTML = `
-    <div class="fmt-info">
-      <div class="fmt-label">⬇ Direct Download</div>
-      <div class="fmt-meta">via proxy</div>
-    </div>
-    <button class="fmt-dl-btn" onclick="window.open('${API_URL}/download?url=${encodeURIComponent(originalUrl)}','_blank')">
-      ⬇ 下载
-    </button>
-  `;
-  fmtsEl.appendChild(proxyRow);
 
   document.getElementById('resultBox').classList.add('show');
   document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
