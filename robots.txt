@@ -15,4 +15,6 @@ Allow: /zh/
 Allow: /ru/
 
 # ملف Sitemap
+Disallow: /download
+
 Sitemap: https://tikosave.com/sitemap.xml
